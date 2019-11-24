@@ -4,37 +4,42 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Random;
-
 /**
- * The following algorithms demonstrate how to sort an array in ascending order using quick sort algorithm by optimizing the choosing the pivot point randomly. The running time
- * of this algorithm is O(nlogn).
+ * The following algorithms demonstrate how to select the element in the given position in the subjected sorted array by piggybacking deterministic QuickSelect algorithm. For an example
+ * finding the seventh largest element in the provided array. This approach is not going to used randomized pivot selection. This algorithm will use the concept of median of medians
+ * where the given array will be split around the pivot approximately to 7n/10 : 3n/10 factor where n is size  of the array. The running time of this algorithm is O(n).
  *
  * @author  Sasitha Niranjana
  * @version 1.0
  * @since   2019-11-24
  */
 @Component
-public class QuickSort {
+public class DSelect {
 
-    public void sortArray(int A[]){
-        SortData sortData = new SortData(A,new Random(),0,A.length-1,0,0,0,0);
-        quickSort(sortData);
+    public int findElement(int A[],int position){
+        if(position < 1 || position > A.length)
+            return -1;
+        return quickSelect(new SortData(A,0,A.length-1,0,0,0,0,position-1,null,0));
     }
 
     /**
      * This function is being called recursively to partition the subjected array segment around the selected pivot. The pivot will be selected randomly and will be assigned to
-     * {@link SortData#pivot}. The array segment will be partitioned around the selected pivot by using {@link #partitionArray(SortData)} function. Finally the array segment bounded by
-     * starting position to the maximum index of the values less than the pivot and the array segment bounded by the minimum index of the values greater than the pivot to the ending
-     * position will be partitioned recursively.
+     * {@link SortData#pivot}. The array segment will be partitioned around the selected pivot by using {@link #partitionArray(SortData)} function. Finally the algorithm will check
+     * whether the given position is inside the index range where values are equal to the pivot. If yes, it will return the value of the pivot, otherwise it will check whether the
+     * given position is in the subset where all the values are smaller than the pivot, if yes it will recurse only the left half of the array, otherwise it will recurse the right
+     * half of the array.
      * @param sortData An instance of {@link SortData}
      */
-    private void quickSort(SortData sortData){
+    private int quickSelect(SortData sortData){
         if(sortData.end - sortData.start + 1 > 2){
-            sortData.pivot = sortData.array[sortData.randomGenerator.nextInt(sortData.array.length)];
+            sortData.pivot = findBestPivot(sortData);
             partitionArray(sortData);
-            quickSort(new SortData(sortData.array,sortData.randomGenerator,sortData.start,sortData.start+sortData.lowerCount-1,0,0,0,0));
-            quickSort(new SortData(sortData.array,sortData.randomGenerator,sortData.start+sortData.lowerCount+sortData.equalsCount,sortData.end,0,0,0,0));
+            if(sortData.position >= sortData.start+sortData.lowerCount && sortData.position < sortData.start+sortData.lowerCount+sortData.equalsCount)
+                return sortData.array[sortData.start+sortData.lowerCount];
+            else if(sortData.position < sortData.start+sortData.lowerCount)
+                return quickSelect(new SortData(sortData.array,sortData.start,sortData.start+sortData.lowerCount-1,0,0,0,0,sortData.position,null,0));
+            else
+                return quickSelect(new SortData(sortData.array,sortData.start+sortData.lowerCount+sortData.equalsCount,sortData.end,0,0,0,0,sortData.position,null,0));
         }
         else{
             for(int i = sortData.start ; i <= sortData.end-1 ; i++){
@@ -46,6 +51,7 @@ public class QuickSort {
                     }
                 }
             }
+            return sortData.array[sortData.position];
         }
     }
 
@@ -94,6 +100,49 @@ public class QuickSort {
     }
 
     /**
+     * This function is being used to find the best pivot using median of medians method. The provided segment of the array is divided into batches where each batch size is 5 except for last
+     * batch if the segment size is not dividable by 5. The median for each batch will be found via {@link #bestPivotBatchSort(int[], int, int)}. The formed median array will be assigned to
+     * {@link SortData#batchArray}. The formed median array will be plugged into findElement function to find the median of medians.
+     * @param sortData An instance of {@link SortData}
+     */
+    private int findBestPivot(SortData sortData){
+        sortData.batchSize = (sortData.end - sortData.start + 1) % 5 > 0 ? (sortData.end - sortData.start + 1) / 5 + 1 : (sortData.end - sortData.start + 1)/5;
+        sortData.batchArray = new int[sortData.batchSize];
+        for(int i = 0; i < sortData.batchSize; i++){
+            if(sortData.array.length % 5 > 0 && i == sortData.batchSize-1){
+                bestPivotBatchSort(sortData.array,sortData.start+5*i,sortData.start+5*i+sortData.array.length % 5 - 1);
+                if((sortData.array.length % 5) % 2 == 0)
+                    sortData.batchArray[i] = sortData.array[sortData.start+5*i+(sortData.array.length % 5)/2-1];
+                else
+                    sortData.batchArray[i] = sortData.array[sortData.start+5*i+((sortData.array.length % 5)+1)/2-1];
+            }
+            else{
+                bestPivotBatchSort(sortData.array,sortData.start+5*i,sortData.start+5*i+4);
+                sortData.batchArray[i] = sortData.array[sortData.start+5*i+2];
+            }
+        }
+        return findElement(sortData.batchArray,sortData.batchArray.length % 2 == 0 ? sortData.batchArray.length/2 : (sortData.batchArray.length+1)/2);
+    }
+
+    /**
+     * This function is being used to sort a small segment of the provided array
+     * @param A The original array
+     * @param  start The starting point of the array segment
+     * @param  end The ending point of the array segment
+     */
+    private void bestPivotBatchSort(int[] A, int start, int end){
+        for(int i = start; i < end; i++){
+            for(int j = i+1; j <= end; j++){
+                if(A[i] > A[j]){
+                    int temp = A[i];
+                    A[i] = A[j];
+                    A[j] = temp;
+                }
+            }
+        }
+    }
+
+    /**
      * This function is being used to swap two values in the array
      * @param data An instance of {@link SortData}
      * @param  left Index of the first element
@@ -120,11 +169,6 @@ public class QuickSort {
          * The array is subject to have sorting order
          */
         int array[];
-
-        /**
-         * Random number generator to generate the position of the pivot randomly
-         */
-        Random randomGenerator;
 
         /**
          * Starting position of the array when doing recursive calls, defining this inline boundary will help to perform inline modifications to the original array without creating a
@@ -157,5 +201,20 @@ public class QuickSort {
          * The value of the pivot point
          */
         int pivot;
+
+        /**
+         * The value of the position where the selection is happening
+         */
+        int position;
+
+        /**
+         * The array is subject to have medians of the batches of the subjected array
+         */
+        int batchArray[];
+
+        /**
+         * The array is subject to have medians of the batches array size
+         */
+        int batchSize;
     }
 }

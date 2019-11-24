@@ -3,7 +3,7 @@ package com.sasitha.algorithms;
 import org.springframework.stereotype.Component;
 
 /**
- * The following algorithms demonstrate how to sort an array in ascending order using merge sort algorithm.
+ * The following algorithms demonstrate how to sort an array in ascending order using merge sort algorithm. The running time of this algorithm is O(nlogn).
  *
  * @author  Sasitha Niranjana
  * @version 1.0

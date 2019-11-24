@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 import java.util.Random;
 
 /**
- * The following algorithms demonstrate how to select the element in the given position in the subjected sorted array by piggybacking randomized QuickSort algorithm. For an example
- * finding the seventh largest element in the provided array.
+ * The following algorithms demonstrate how to select the element in the given position in the subjected sorted array by piggybacking randomized QuickSelect algorithm. For an example
+ * finding the seventh largest element in the provided array. The running time of this algorithm is O(n).
  *
  * @author  Sasitha Niranjana
  * @version 1.0
@@ -102,7 +102,7 @@ public class RSelect {
     }
 
     /**
-     * this function is being used to swap two values in the array
+     * This function is being used to swap two values in the array
      * @param data An instance of {@link SortData}
      * @param  left Index of the first element
      * @param  right Index of the second element
